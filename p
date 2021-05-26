@@ -118,7 +118,7 @@ then
   shift
 
   ssh_cmd() {
-    ssh -t -i "$ID_RSA_FILE" -o PasswordAuthentication=no pernosco@"$HOST" "$@"
+    ssh -q -t -i "$ID_RSA_FILE" -o PasswordAuthentication=no pernosco@"$HOST" "$@"
   }
 
   export TIMEFORMAT=" (%R s)"

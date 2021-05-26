@@ -121,9 +121,9 @@ then
   #   su pernosco
   #   cat /PATH/TO/SPECIAL/id_rsa.pub > ~/.ssh/authorized_keys
   #   Krams zu /opt/pernosco, ~/.bash_aliases bei tps-docker-srv-02 abgucken
-  if ! ssh_cmd /bin/true
+  if ! ssh_cmd "cd /opt/pernosco/on-prem && git pull"
   then
-    echo Connecting to "$HOST" failed
+    echo Connecting to "$HOST" and upgrading /opt/pernosco/on-prem failed
 
     if [[ -d "$HOST" ]]
     then

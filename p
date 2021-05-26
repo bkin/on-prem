@@ -32,16 +32,29 @@ then
   }
 fi
 
-case "$1" in
-  -h | --help | help) usage; exit 0;;
-  build) shift; DO_BUILD=1;;
-  only-build) shift; DO_ONLY_BUILD=1;;
-  serve) shift; DO_SERVE=1;;
-  share) shift; DO_SHARE=1;;
-  submit) shift; DO_SUBMIT=1;;
-  record) shift; DO_RECORD=1;;
-  *) DO_RECORD=1;;
-esac
+# Let's pass on pernosco's '--log'-option
+if (( $# >= 2 )) && [[ $1 == --log ]]; then
+  LOG_ARG="$1=$2"
+  shift
+  shift
+elif (( $# >= 1 )) && [[ $1 =~ --log=.* ]]; then
+  LOG_ARG="$1"
+  shift
+fi
+
+while (( $# > 0 ))
+do
+  case "$1" in
+    -h | --help | help) usage; exit 0;;
+    build) shift; DO_BUILD=1; break;;
+    only-build) shift; DO_ONLY_BUILD=1; break;;
+    serve) shift; DO_SERVE=1; break;;
+    share) shift; DO_SHARE=1; break;;
+    submit) shift; DO_SUBMIT=1; break;;
+    record) shift; DO_RECORD=1; break;;
+    *) DO_RECORD=1; break;;
+  esac
+done
 
 echoexec() {
   echo "Running '$*'" >&2
@@ -175,7 +188,7 @@ then
   else
     # TODO Gather some info for --substitute and --copy-sources from the executable files in $TRACEDIR
     #pernosco package-build $MOUNTED_WORK/rr/tps-6 --substitute DEFAULT=$MOUNTED_WORK/cmake_builds/release --copy-sources $MOUNTED_WORK
-    time pernosco package-build "$TRACEDIR" && touch "$TRACEDIR/package_complete"
+    time pernosco "--log=info:$TRACEDIR/package-build.log" package-build "$TRACEDIR" && touch "$TRACEDIR/package_complete"
   fi
 
   echo "Building the pernosco db for /opt/pernosco/submit/$SUBMIT_ID/trace on $HOST"
@@ -191,27 +204,27 @@ then
     # target name for the trace dir contents
     scp_to_host_cmd "$TRACEDIR/" "pernosco@$HOST:/opt/pernosco/submit/$SUBMIT_ID/trace"
 
-    time ssh_cmd "p only-build /opt/pernosco/submit/$SUBMIT_ID/trace && touch /opt/pernosco/submit/$SUBMIT_ID/build_complete"
+    time ssh_cmd "p --log=info:/opt/pernosco/submit/$SUBMIT_ID/only-build.log only-build /opt/pernosco/submit/$SUBMIT_ID/trace && touch /opt/pernosco/submit/$SUBMIT_ID/build_complete"
   fi
 
   echo "Serving results Building the pernosco db for /opt/pernosco/submit/$SUBMIT_ID/trace on $HOST"
-  ssh_cmd "p share --storage /opt/pernosco/submit/$SUBMIT_ID/trace /opt/pernosco/submit/$SUBMIT_ID/trace"
+  ssh_cmd "p --log=info:/opt/pernosco/submit/$SUBMIT_ID/serve.log share --storage /opt/pernosco/submit/$SUBMIT_ID /opt/pernosco/submit/$SUBMIT_ID/trace"
   exit $?
 elif (( DO_BUILD == 1 ))
 then
-  echoexec pernosco build "$@"
+  echoexec pernosco "$LOG_ARG" build "$@"
 elif (( DO_ONLY_BUILD == 1 ))
 then
-  echoexec pernosco only-build "$@"
+  echoexec pernosco "$LOG_ARG" only-build "$@"
 elif (( DO_SERVE == 1 ))
 then
   # TODO: Provide help for --sources
-  echoexec pernosco serve "$@"
+  echoexec pernosco "$LOG_ARG" serve "$@"
 elif (( DO_SHARE == 1 ))
 then
   # Run pernosco serve + wait until we know ip+port
   echo "Running 'pernosco serve $*' and serving, too"
-  coproc PERNOSCO_SERVE { pernosco serve "$@"; }
+  coproc PERNOSCO_SERVE { pernosco "$LOG_ARG" serve "$@"; }
   # shellcheck disable=SC2064
   trap "kill -SIGINT $PERNOSCO_SERVE_PID; wait" EXIT
 

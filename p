@@ -105,7 +105,7 @@ then
   shift
 
   ssh_cmd() {
-    ssh -i "$ID_RSA_FILE" -o PasswordAuthentication=no pernosco@"$HOST" "$@"
+    ssh -t -i "$ID_RSA_FILE" -o PasswordAuthentication=no pernosco@"$HOST" "$@"
   }
 
   export TIMEFORMAT=" (%R s)"
@@ -167,25 +167,30 @@ then
   SUBMIT_ID=$( cat "$TRACEDIR/submit_id" )
 
   # You can call submit more than once. We skip the db build if possible and only serve
+  # Step 1: Run `pernosco package-build`
+  echo "Preparing trace for submit"
+  if [[ -f "$TRACEDIR/package_complete" ]]
+  then
+    echo "Trace already packaged"
+  else
+    # TODO Gather some info for --substitute and --copy-sources from the executable files in $TRACEDIR
+    #pernosco package-build $MOUNTED_WORK/rr/tps-6 --substitute DEFAULT=$MOUNTED_WORK/cmake_builds/release --copy-sources $MOUNTED_WORK
+    time pernosco package-build "$TRACEDIR" && touch "$TRACEDIR/package_complete"
+  fi
+
+  echo "Building the pernosco db for /opt/pernosco/submit/$SUBMIT_ID/trace on $HOST"
   if ssh_cmd "test -f /opt/pernosco/submit/$SUBMIT_ID/build_complete"
   then
     echo "Build already complete"
   else
-    # Step 1: Run `pernosco package-build`
-    echo -n "Preparing trace for submit"
-    # TODO Gather some info for --substitute and --copy-sources from the executable files in $TRACEDIR
-    #pernosco package-build $MOUNTED_WORK/rr/tps-6 --substitute DEFAULT=$MOUNTED_WORK/cmake_builds/release --copy-sources $MOUNTED_WORK
-    time pernosco package-build "$TRACEDIR"
-
     # Step 2: Copy trace to host
     echo -n "Copy $TRACEDIR to $HOST:/opt/pernosco/submit/$SUBMIT_ID/trace"
     ssh_cmd mkdir -p "/opt/pernosco/submit/$SUBMIT_ID"
 
     # To be able to put some other stuff into $SUBMIT_ID, we us "/trace" as a
     # target name for the trace dir contents
-    time scp_to_host_cmd "$TRACEDIR/" "pernosco@$HOST:/opt/pernosco/submit/$SUBMIT_ID/trace"
+    scp_to_host_cmd "$TRACEDIR/" "pernosco@$HOST:/opt/pernosco/submit/$SUBMIT_ID/trace"
 
-    echo -n "Building the pernosco db for /opt/pernosco/submit/$SUBMIT_ID/trace on $HOST"
     time ssh_cmd "p only-build /opt/pernosco/submit/$SUBMIT_ID/trace && touch /opt/pernosco/submit/$SUBMIT_ID/build_complete"
   fi
 

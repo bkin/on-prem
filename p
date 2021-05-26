@@ -27,7 +27,9 @@ EOF
 
 if python3 --version | grep -q 'Python 3.[0-7]'
 then
-  alias pernosco="python3.8 pernosco"
+  pernosco() {
+    python3.8 $( which pernosco ) "$@"
+  }
 fi
 
 case "$1" in
@@ -43,7 +45,8 @@ esac
 
 echoexec() {
   echo "Running '$*'" >&2
-  exec "$@"
+  "$@"
+  exit $?
 }
 
 if (( DO_RECORD == 1 ))

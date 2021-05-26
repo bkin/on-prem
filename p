@@ -186,9 +186,25 @@ then
   then
     echo "Trace already packaged"
   else
-    # TODO Gather some info for --substitute and --copy-sources from the executable files in $TRACEDIR
-    #pernosco package-build $MOUNTED_WORK/rr/tps-6 --substitute DEFAULT=$MOUNTED_WORK/cmake_builds/release --copy-sources $MOUNTED_WORK
-    time pernosco "--log=info:$TRACEDIR/package-build.log" package-build "$TRACEDIR" && touch "$TRACEDIR/package_complete"
+    find "$TRACEDIR" -executable -name "mmap*" -print0 | xargs -0 -n1 -P $(nproc) update_comp_dir.sh
+    for COMP_DIR_FILE in "$TRACEDIR"/*.comp_dir
+    do
+      # When COMP_DIR_FILE is empty, we could not figure out what DW_AT_comp_dir is.
+      # Let's ignore that case
+      if [[ -s "$COMP_DIR_FILE" ]]
+      then
+        SUB=( $( cat $COMP_DIR_FILE ) )
+        SONAME=${SUB[0]}
+        COMP_DIR=${SUB[1]}
+        if [[ ! -d "$COMP_DIR" ]]
+        then
+          echo "COMP_DIR $COMP_DIR not found. Please add a substitution in $COMP_DIR_FILE" >&2 
+        else
+          SUBSTITUTES="--substitute $SONAME=$COMP_DIR $SUBSTITUTES"
+        fi
+      fi
+    done
+    time pernosco "--log=info:$TRACEDIR/package-build.log" package-build $SUBSTITUTES --copy-sources / "$TRACEDIR" && touch "$TRACEDIR/package_complete"
   fi
 
   echo "Building the pernosco db for /opt/pernosco/submit/$SUBMIT_ID/trace on $HOST"

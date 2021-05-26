@@ -220,11 +220,11 @@ then
     # target name for the trace dir contents
     scp_to_host_cmd "$TRACEDIR/" "pernosco@$HOST:/opt/pernosco/submit/$SUBMIT_ID/trace"
 
-    time ssh_cmd "p --log=info:/opt/pernosco/submit/$SUBMIT_ID/only-build.log only-build /opt/pernosco/submit/$SUBMIT_ID/trace && touch /opt/pernosco/submit/$SUBMIT_ID/build_complete"
+    time ssh_cmd "p --log=info:/opt/pernosco/submit/$SUBMIT_ID/trace/only-build.log only-build /opt/pernosco/submit/$SUBMIT_ID/trace && touch /opt/pernosco/submit/$SUBMIT_ID/build_complete"
   fi
 
   echo "Serving results Building the pernosco db for /opt/pernosco/submit/$SUBMIT_ID/trace on $HOST"
-  ssh_cmd "p --log=info:/opt/pernosco/submit/$SUBMIT_ID/serve.log share --storage /opt/pernosco/submit/$SUBMIT_ID /opt/pernosco/submit/$SUBMIT_ID/trace"
+  ssh_cmd "p --log=info:/opt/pernosco/submit/$SUBMIT_ID/trace/serve.log share --storage /opt/pernosco/submit/$SUBMIT_ID /opt/pernosco/submit/$SUBMIT_ID/trace"
   exit $?
 elif (( DO_BUILD == 1 ))
 then

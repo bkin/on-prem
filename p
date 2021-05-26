@@ -65,9 +65,12 @@ then
   TRACEDIR="$_RR_TRACE_DIR"/latest-trace
 fi
 
-if [[ -d "$TRACEDIR" ]] && [[ -d "$MOUNTED_WORK" ]]
+if [[ -d "$TRACEDIR" ]]
 then
-  TRACEDIR=${TRACEDIR//\/b\/work/$MOUNTED_WORK}
+  if [[ -d "$MOUNTED_WORK" ]]
+  then
+    TRACEDIR=${TRACEDIR//\/b\/work/$MOUNTED_WORK}
+  fi
 
   # Now append $TRACEDIR as the last argument for 'pernosco serve|build'
   set -- "${@}" "$TRACEDIR"
@@ -190,7 +193,7 @@ then
 elif (( DO_SHARE == 1 ))
 then
   # Run pernosco serve + wait until we know ip+port
-  echo "Running 'pernosco serve $*'"
+  echo "Running 'pernosco serve $*' and serving, too"
   coproc PERNOSCO_SERVE { pernosco serve "$@"; }
   # shellcheck disable=SC2064
   trap "kill -SIGINT $PERNOSCO_SERVE_PID; wait" EXIT

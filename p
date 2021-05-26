@@ -178,8 +178,7 @@ then
   fi
 
   echo "Serving results Building the pernosco db for /opt/pernosco/submit/$SUBMIT_ID/trace on $HOST"
-  #ssh_cmd "p serve --storage /opt/pernosco/submit/$SUBMIT_ID/trace /opt/pernosco/submit/$SUBMIT_ID/trace"
-  ssh_cmd "p serve /opt/pernosco/submit/$SUBMIT_ID/trace"
+  ssh_cmd "p share --storage /opt/pernosco/submit/$SUBMIT_ID/trace /opt/pernosco/submit/$SUBMIT_ID/trace"
   exit $?
 elif (( DO_BUILD == 1 ))
 then

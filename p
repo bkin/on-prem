@@ -25,9 +25,15 @@ for 'rr record' before your program name.
 EOF
 }
 
+if python3 --version | grep -q 'Python 3.[0-7]'
+then
+  alias pernosco="python3.8 pernosco"
+fi
+
 case "$1" in
   -h | --help | help) usage; exit 0;;
   build) shift; DO_BUILD=1;;
+  only-build) shift; DO_ONLY_BUILD=1;;
   serve) shift; DO_SERVE=1;;
   share) shift; DO_SHARE=1;;
   submit) shift; DO_SUBMIT=1;;
@@ -177,7 +183,7 @@ then
     time scp_to_host_cmd "$TRACEDIR/" "pernosco@$HOST:/opt/pernosco/submit/$SUBMIT_ID/trace"
 
     echo -n "Building the pernosco db for /opt/pernosco/submit/$SUBMIT_ID/trace on $HOST"
-    time ssh_cmd "pernosco only-build /opt/pernosco/submit/$SUBMIT_ID/trace && touch /opt/pernosco/submit/$SUBMIT_ID/build_complete"
+    time ssh_cmd "p only-build /opt/pernosco/submit/$SUBMIT_ID/trace && touch /opt/pernosco/submit/$SUBMIT_ID/build_complete"
   fi
 
   echo "Serving results Building the pernosco db for /opt/pernosco/submit/$SUBMIT_ID/trace on $HOST"
@@ -186,6 +192,9 @@ then
 elif (( DO_BUILD == 1 ))
 then
   echoexec pernosco build "$@"
+elif (( DO_ONLY_BUILD == 1 ))
+then
+  echoexec pernosco only-build "$@"
 elif (( DO_SERVE == 1 ))
 then
   # TODO: Provide help for --sources

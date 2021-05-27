@@ -266,10 +266,10 @@ def collect_source_dirs() -> Tuple[List[str], Dict[str, str]]:
     return (source_dirs, comp_dir_substitutions)
 
 def build_cmd() -> None:
-    package_build()
-    only_build()
+    package_build_cmd()
+    only_build_cmd()
 
-def package_build() -> None:
+def package_build_cmd() -> None:
     base.trace_dir = trace_dir()
     if not args.skip_rr:
         if not shutil.which('rr'):
@@ -284,10 +284,10 @@ def package_build() -> None:
         sources.package_source_files(source_dirs, comp_dir_substitutions)
     set_default_user_sources()
 
-def only_build() -> None:
+def only_build_cmd() -> None:
+    base.trace_dir = trace_dir()
     check_docker_installed()
     pull_if_needed(BUILDER_IMAGE)
-    base.trace_dir = trace_dir()
     base.call(['chmod', '--quiet', '--recursive', 'ugo+rwX', base.trace_dir])
     read_write_mounts = [(base.trace_dir, "/trace")]
     container_args = ["--empty-umask"]
@@ -351,9 +351,9 @@ if args.subcommand == 'pull':
 elif args.subcommand == 'build':
     build_cmd()
 elif args.subcommand == 'package-build':
-    package_build()
+    package_build_cmd()
 elif args.subcommand == 'only-build':
-    only_build()
+    only_build_cmd()
 elif args.subcommand == 'rr':
     rr_cmd()
 elif args.subcommand == 'serve':
